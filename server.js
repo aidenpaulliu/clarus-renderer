@@ -53,7 +53,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
     }
     .content {
       position: absolute;
-      bottom: 92px;
+      bottom: 220px;
       left: 64px;
       width: 916px;
       display: flex;
