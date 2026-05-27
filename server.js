@@ -43,17 +43,17 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
       background: linear-gradient(
         to bottom,
         rgba(50, 48, 45, 0)    0%,
-        rgba(50, 48, 45, 0)    44%,
-        rgba(50, 48, 45, 0.10) 53.5%,
-        rgba(50, 48, 45, 0.32) 65%,
-        rgba(50, 48, 45, 0.58) 76%,
-        rgba(50, 48, 45, 0.72) 88%,
+        rgba(50, 48, 45, 0)    55%,
+        rgba(50, 48, 45, 0.10) 63%,
+        rgba(50, 48, 45, 0.32) 72%,
+        rgba(50, 48, 45, 0.58) 82%,
+        rgba(50, 48, 45, 0.72) 91%,
         rgba(50, 48, 45, 0.78) 100%
       );
     }
     .content {
       position: absolute;
-      bottom: 220px;
+      bottom: 180px;
       left: 64px;
       width: 916px;
       display: flex;
@@ -66,7 +66,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
       font-weight: 700;
       color: #ffffff;
       line-height: 1.08;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.04em;
     }
   </style>
 </head>
@@ -79,7 +79,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
     </div>
     <p style="
       position: absolute;
-      bottom: 52px;
+      bottom: 80px;
       left: 0;
       right: 0;
       text-align: center;
@@ -108,7 +108,6 @@ app.get("/", (req, res) => {
 // ─────────────────────────────────────────────
 
 app.post("/render/cover", async (req, res) => {
-  // Optional secret auth
   if (RENDER_SECRET) {
     const auth = req.headers["x-render-secret"];
     if (auth !== RENDER_SECRET) {
@@ -124,7 +123,6 @@ app.post("/render/cover", async (req, res) => {
     });
   }
 
-  // Enforce 90 char limit on hook_text
   if (hook_text.length > 90) {
     return res.status(400).json({
       error: `hook_text exceeds 90 character limit (${hook_text.length} chars)`,
@@ -147,15 +145,11 @@ app.post("/render/cover", async (req, res) => {
     });
 
     const page = await browser.newPage();
-
-    // Set viewport to exact slide dimensions
     await page.setViewport({ width: 1080, height: 1440, deviceScaleFactor: 1 });
 
     const html = buildCoverHtml(background_image, hook_text, brand_handle);
-
     await page.setContent(html, { waitUntil: "networkidle0", timeout: 20000 });
 
-    // Wait for background image to load
     await page.waitForFunction(
       () => {
         const img = document.querySelector(".background-image");
@@ -163,7 +157,6 @@ app.post("/render/cover", async (req, res) => {
       },
       { timeout: 15000 }
     ).catch(() => {
-      // Image may fail to load due to CDN restrictions — render anyway
       console.warn("Background image did not fully load — rendering without it");
     });
 
@@ -175,11 +168,7 @@ app.post("/render/cover", async (req, res) => {
 
     await browser.close();
 
-    res.json({
-      png_base64: screenshot,
-      width: 1080,
-      height: 1440,
-    });
+    res.json({ png_base64: screenshot, width: 1080, height: 1440 });
 
   } catch (err) {
     if (browser) await browser.close().catch(() => {});
