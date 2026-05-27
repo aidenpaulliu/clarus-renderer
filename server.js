@@ -55,7 +55,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
       position: absolute;
       bottom: 180px;
       left: 64px;
-      width: 800px;
+      width: 850px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
