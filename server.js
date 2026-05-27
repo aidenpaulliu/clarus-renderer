@@ -55,7 +55,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
       position: absolute;
       bottom: 180px;
       left: 64px;
-      width: 916px;
+      width: 720px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -63,7 +63,7 @@ function buildCoverHtml(backgroundImage, hookText, brandHandle) {
     }
     .hook-text {
       font-size: 86px;
-      font-weight: 700;
+      font-weight: 800;
       color: #ffffff;
       line-height: 1.08;
       letter-spacing: -0.04em;
