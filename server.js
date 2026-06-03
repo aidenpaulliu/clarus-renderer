@@ -98,8 +98,10 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1080px; height: 1440px; overflow: hidden; background: #000; }
   .card { position: relative; width: 1080px; height: 1440px; overflow: hidden; }
@@ -126,14 +128,14 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
     position: absolute; left: 85px; right: 85px; bottom: 160px;
   }
   .category {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 22px; color: #ffffff;
-    letter-spacing: 0.08em; line-height: 1;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 18px; color: #ffffff;
+    letter-spacing: 0.06em; line-height: 1;
     margin-bottom: 28px; text-transform: uppercase;
   }
   .headline {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-weight: 800; font-size: 76px; line-height: 1.03;
+    font-weight: 800; font-size: 72px; line-height: 1.05;
     color: #ffffff; letter-spacing: -0.03em; word-break: break-word;
   }
   .headline em {
@@ -161,16 +163,6 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
   </div>
   <div class="swipe">swipe for more &#8594;</div>
 </div>
-<script>
-(function() {
-  var h = document.getElementById("hl");
-  var sizes = [76, 66, 56, 48, 42, 36];
-  for (var i = 0; i < sizes.length; i++) {
-    h.style.fontSize = sizes[i] + "px";
-    if (h.scrollHeight <= h.offsetHeight * 1.1) break;
-  }
-})();
-</script>
 </body>
 </html>`;
 }
@@ -180,7 +172,7 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
 // ─────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "clarus-renderer", version: "1.1.1" });
+  res.json({ status: "ok", service: "clarus-renderer", version: "1.1.2" });
 });
 
 // ─────────────────────────────────────────────
@@ -242,11 +234,17 @@ app.post("/render/news-cover", async (req, res) => {
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1440, deviceScaleFactor: 1 });
     const html = buildNewsCoverHtml(background_image, headlineHtml);
-    await page.setContent(html, { waitUntil: "networkidle0", timeout: 20000 });
+    await page.setContent(html, { waitUntil: "networkidle0", timeout: 30000 });
+
+    // Wait for background image to load
     await page.waitForFunction(
       () => { const img = document.querySelector(".bg"); return img && img.complete && img.naturalHeight > 0; },
       { timeout: 15000 }
     ).catch(() => console.warn("Background image did not fully load"));
+
+    // Wait for fonts to be fully parsed and applied — required for web fonts in Puppeteer
+    await page.evaluate(() => document.fonts.ready);
+
     const screenshot = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: 1080, height: 1440 }, encoding: "base64" });
     await browser.close();
     res.json({ png_base64: screenshot, width: 1080, height: 1440 });
