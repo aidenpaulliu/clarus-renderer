@@ -121,14 +121,14 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
   }
   .logo {
     position: absolute; top: 85px; left: 85px;
-    height: 68px; width: auto;
+    height: 44px; width: auto;
   }
   .text-block {
     position: absolute; left: 85px; right: 85px; bottom: 160px;
   }
   .category {
     font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 18px; color: #ffffff;
+    font-size: 24px; color: #ffffff;
     letter-spacing: 0.06em; line-height: 1;
     margin-bottom: 28px; text-transform: uppercase;
   }
