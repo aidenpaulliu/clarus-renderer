@@ -128,7 +128,7 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
   }
   .category {
     font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 24px; color: #ffffff;
+    font-size: 18px; color: #ffffff;
     letter-spacing: 0.06em; line-height: 1;
     margin-bottom: 28px; text-transform: uppercase;
   }
@@ -144,7 +144,7 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
     text-decoration-thickness: 3px;
   }
   .swipe {
-    position: absolute; bottom: 80px; right: 85px;
+    position: absolute; bottom: 80px; left: 85px;
     font-family: Georgia, serif; font-style: italic;
     font-size: 24px; color: rgba(255,255,255,0.70);
     letter-spacing: 0.01em; white-space: nowrap;
@@ -171,7 +171,7 @@ function buildNewsCoverHtml(backgroundImage, headlineHtml) {
 // ─────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "clarus-renderer", version: "1.1.3" });
+  res.json({ status: "ok", service: "clarus-renderer", version: "1.1.4" });
 });
 
 // ─────────────────────────────────────────────
