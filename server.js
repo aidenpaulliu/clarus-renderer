@@ -240,6 +240,7 @@ ${t.googleFonts}
     font-family: '${t.headlineFont}', Helvetica, Arial, sans-serif;
     font-weight: 800; font-size: 64px; line-height: 1.1;
     color: ${t.textHex}; letter-spacing: -0.03em; word-break: break-word;
+    text-transform: uppercase;
   }
   .headline em { ${t.emphasis} }
   .swipe {
@@ -270,7 +271,7 @@ ${t.googleFonts}
 // ─────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "clarus-renderer", version: "1.4.0" });
+  res.json({ status: "ok", service: "clarus-renderer", version: "1.4.1" });
 });
 
 // ─────────────────────────────────────────────
