@@ -119,6 +119,7 @@ function readBrand(brand, preset) {
 
   return {
     logoUrl: b.logo_url || null,
+    logoHeight: Number(b.logo_height) > 0 ? Number(b.logo_height) : 44, // px; brand-tunable
     bgRgb: hexToRgb(colors.background, "0,0,0"),
     textHex: colors.text || "#ffffff",
     textRgb: hexToRgb(colors.text, "255,255,255"),
@@ -126,6 +127,7 @@ function readBrand(brand, preset) {
     headlineFont: fonts.headline || "Helvetica Neue",
     categoryFont: fonts.category || "'Courier New', monospace",
     googleFonts: googleFontsLink(fonts.google_fonts),
+    googleFontFamilies: Array.isArray(fonts.google_fonts) ? fonts.google_fonts : [],
     categoryLabel: b.category_label || "",
     emphasis: emphasisCss(b.emphasis_style),
     swipeLabel: b.swipe_label || "swipe for more \u2192",
@@ -224,8 +226,8 @@ ${t.googleFonts}
     object-fit: cover; object-position: center top; display: block;
   }
   .gradient { position: absolute; inset: 0; background: ${gradient}; }
-  .logo { position: absolute; top: 85px; left: 85px; height: 44px; width: auto; }
-  .text-block { position: absolute; left: 85px; right: 85px; bottom: 160px; }
+  .logo { position: absolute; top: 85px; left: 85px; height: ${t.logoHeight}px; width: auto; }
+  .text-block { position: absolute; left: 85px; right: 85px; bottom: 160px; max-height: 980px; }
   .category {
     font-family: ${t.categoryFont};
     font-size: 18px; color: ${t.textHex};
@@ -234,7 +236,7 @@ ${t.googleFonts}
   }
   .headline {
     font-family: '${t.headlineFont}', Helvetica, Arial, sans-serif;
-    font-weight: 800; font-size: 72px; line-height: 1.05;
+    font-weight: 800; font-size: 56px; line-height: 1.08;
     color: ${t.textHex}; letter-spacing: -0.03em; word-break: break-word;
   }
   .headline em { ${t.emphasis} }
@@ -257,6 +259,23 @@ ${t.googleFonts}
   </div>
   <div class="swipe">${t.swipeLabel}</div>
 </div>
+<script>
+  // Auto-fit: scale the headline so it fills the text block without overflowing.
+  // Short headlines grow toward the max; long headlines shrink to fit. Length-agnostic.
+  // Called by the renderer AFTER fonts load, so measurement uses the real font.
+  window.__fitHeadline = function () {
+    var hl = document.getElementById("hl");
+    var block = hl ? hl.parentElement : null;
+    if (!hl || !block) return;
+    var MAX = 84, MIN = 34, size = MAX;
+    var avail = block.getBoundingClientRect().height;
+    hl.style.fontSize = size + "px";
+    while (size > MIN && hl.scrollHeight > avail) {
+      size -= 2;
+      hl.style.fontSize = size + "px";
+    }
+  };
+</script>
 </body>
 </html>`;
 }
@@ -266,7 +285,7 @@ ${t.googleFonts}
 // ─────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "clarus-renderer", version: "1.2.0" });
+  res.json({ status: "ok", service: "clarus-renderer", version: "1.3.0" });
 });
 
 // ─────────────────────────────────────────────
@@ -331,6 +350,11 @@ app.post("/render/news-cover", async (req, res) => {
     headlineHtml = headline.replace(emphasis_phrase, `<em>${emphasis_phrase}</em>`);
   }
 
+  // Font families this brand imports from Google Fonts — wait for each so the
+  // screenshot doesn't capture before the web font is applied. No font name is
+  // hardcoded here; it comes from the brand row.
+  const googleFamilies = Array.isArray(brand?.fonts?.google_fonts) ? brand.fonts.google_fonts : [];
+
   let browser;
   try {
     browser = await puppeteer.launch({ headless: "new", args: PUPPETEER_ARGS });
@@ -344,7 +368,15 @@ app.post("/render/news-cover", async (req, res) => {
         { timeout: 15000 }
       )
       .catch(() => console.warn("Background image did not fully load"));
-    await page.evaluate(() => document.fonts.ready);
+    // Wait for general font readiness, then explicitly load each brand Google font.
+    await page.evaluate(async (families) => {
+      await document.fonts.ready;
+      await Promise.all(
+        (families || []).map((f) => document.fonts.load(`18px '${f}'`).catch(() => {}))
+      );
+    }, googleFamilies);
+    // Fit the headline now that the real font is applied (measurement is accurate).
+    await page.evaluate(() => { if (window.__fitHeadline) window.__fitHeadline(); });
     const screenshot = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: 1080, height: 1440 }, encoding: "base64" });
     await browser.close();
     res.json({ png_base64: screenshot, width: 1080, height: 1440 });
