@@ -125,7 +125,7 @@ function readBrand(brand, preset) {
     textRgb: hexToRgb(colors.text, "255,255,255"),
     accent: colors.accent || null,
     headlineFont: fonts.headline || "Helvetica Neue",
-    categoryFont: fonts.category || "'Courier New', monospace",
+    categoryFont: fonts.category || "Courier New",
     googleFonts: googleFontsLink(fonts.google_fonts),
     googleFontFamilies: Array.isArray(fonts.google_fonts) ? fonts.google_fonts : [],
     categoryLabel: b.category_label || "",
@@ -227,16 +227,18 @@ ${t.googleFonts}
   }
   .gradient { position: absolute; inset: 0; background: ${gradient}; }
   .logo { position: absolute; top: 85px; left: 85px; height: ${t.logoHeight}px; width: auto; }
-  .text-block { position: absolute; left: 85px; right: 85px; bottom: 160px; max-height: 980px; }
+  .text-block { position: absolute; left: 85px; right: 85px; bottom: 160px; }
   .category {
-    font-family: ${t.categoryFont};
+    font-family: '${t.categoryFont}', 'Courier New', monospace;
     font-size: 18px; color: ${t.textHex};
     letter-spacing: 0.06em; line-height: 1;
     margin-bottom: 28px; text-transform: uppercase;
   }
   .headline {
+    /* Constant size. The text block is bottom-anchored and grows upward as the
+       headline gets longer; the font size itself does not change. */
     font-family: '${t.headlineFont}', Helvetica, Arial, sans-serif;
-    font-weight: 800; font-size: 56px; line-height: 1.08;
+    font-weight: 800; font-size: 64px; line-height: 1.1;
     color: ${t.textHex}; letter-spacing: -0.03em; word-break: break-word;
   }
   .headline em { ${t.emphasis} }
@@ -259,23 +261,6 @@ ${t.googleFonts}
   </div>
   <div class="swipe">${t.swipeLabel}</div>
 </div>
-<script>
-  // Auto-fit: scale the headline so it fills the text block without overflowing.
-  // Short headlines grow toward the max; long headlines shrink to fit. Length-agnostic.
-  // Called by the renderer AFTER fonts load, so measurement uses the real font.
-  window.__fitHeadline = function () {
-    var hl = document.getElementById("hl");
-    var block = hl ? hl.parentElement : null;
-    if (!hl || !block) return;
-    var MAX = 84, MIN = 34, size = MAX;
-    var avail = block.getBoundingClientRect().height;
-    hl.style.fontSize = size + "px";
-    while (size > MIN && hl.scrollHeight > avail) {
-      size -= 2;
-      hl.style.fontSize = size + "px";
-    }
-  };
-</script>
 </body>
 </html>`;
 }
@@ -285,7 +270,7 @@ ${t.googleFonts}
 // ─────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({ status: "ok", service: "clarus-renderer", version: "1.3.0" });
+  res.json({ status: "ok", service: "clarus-renderer", version: "1.4.0" });
 });
 
 // ─────────────────────────────────────────────
@@ -375,8 +360,6 @@ app.post("/render/news-cover", async (req, res) => {
         (families || []).map((f) => document.fonts.load(`18px '${f}'`).catch(() => {}))
       );
     }, googleFamilies);
-    // Fit the headline now that the real font is applied (measurement is accurate).
-    await page.evaluate(() => { if (window.__fitHeadline) window.__fitHeadline(); });
     const screenshot = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: 1080, height: 1440 }, encoding: "base64" });
     await browser.close();
     res.json({ png_base64: screenshot, width: 1080, height: 1440 });
